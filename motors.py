@@ -3,7 +3,7 @@
 # Samuel Gue, Lydia Heath, Gabriel Ruiz, Marilyn Turner, Sabrina Weng
 
 from rpi_hardware_pwm import HardwarePWM
-from gpiozero import PWMOutputDevice, DigitalOutputDevice, Button, MCP3008
+from gpiozero import DigitalOutputDevice, Button, MCP3008
 from time import sleep
 import time
 import signal
@@ -12,16 +12,12 @@ import threading
 import spidev
 
 ###################### Macros ######################
-PWM1_PIN = 12  # PWM control for motor 1 on pin GPIO12
-PWM2_PIN = 13  # PWM control for motor 2 on pin GPIO13
 DIR1_PIN = 16  # DIR control for motor 1 on pin GPIO16
 DIR2_PIN = 6   # DIR control for motor 2 on pin GPIO6
 BAIL_PIN = 5 # Bail Bar control simulated on GPIO5
 RELAY_PIN = 27 # Relay test on GPIO27
 #REED_PIN = 17 # Bail bar control simulated on GPI017
 DUTY_CYCLE = 0.25
-FREQUENCY = 10000
-
 
 ###################### Code ######################
 
@@ -30,10 +26,8 @@ spi = spidev.SpiDev()
 spi.open(0,0) # Open SPI bus
 spi.max_speed_hz = 1800000 # recommended SPI clock frequency for range 2.7<voltage<3.3
 
-# PWM1 = PWMOutputDevice(pin=PWM1_PIN, active_high=True, frequency = FREQUENCY) # Initial frequency = 100Hz
-# PWM2 = PWMOutputDevice(pin=PWM2_PIN, active_high=True, frequency = FREQUENCY)
-PWM0 = HardwarePWM(pwm_channel=0, hz=18000)
-PWM1 = HardwarePWM(pwm_channel=1, hz=18000)
+PWM0 = HardwarePWM(pwm_channel=0, hz=18000) # GPIO12
+PWM1 = HardwarePWM(pwm_channel=1, hz=18000) # GPIO13
 
 # NOTE: DIR off = clockwise, DIR on = couter-clockwise
 DIR1 = DigitalOutputDevice(DIR1_PIN) # initially off
@@ -106,8 +100,6 @@ while True: # Continuous loop
             dutycyclevalue = Read_Channel_0(0)
             DUTY_CYCLE = dutycyclevalue / 1023 # ADC calculation
             print(f"Pot value: {DUTY_CYCLE}")
-            # PWM1.value = DUTY_CYCLE
-            # PWM2.value = DUTY_CYCLE
             PWM0.start(DUTY_CYCLE*100)      # Send Hardware PWM to motors
             PWM1.start(DUTY_CYCLE*100)
             time.sleep(.5)
@@ -126,68 +118,7 @@ while True: # Continuous loop
             break
         continue
 
-
 spi.close()
-# while True:
-#     try:
-#         while pot_reading:
-#             print(f"Pot value: {Pot.value}") # Reads pot values
-#             duty_cycle = round(Pot.value, 2)
-#             PWM1.value = 1 - duty_cycle
-#             PWM2.value = 1 - duty_cycle
-#             time.sleep(5)
-#     except KeyboardInterrupt:
-#         print("interrupt caught")
-
-#         Slow_down(duty_cycle)
-
-#         if i >= 2:
-#             break
-#         continue
-
-# while True:
-#     if not Estop.is_pressed:
-#         print("Button is pressed")
-#     else:
-#         print("Button is not pressed")
-
-
-# Drive motors
-# PWM1.on()
-# PWM2.on()
-# PWM1.value = 0
-# PWM2.value = 0
-#for remaining in range (30, 0, -1):
-#    PWM.blink(on_time=DUTY_CYCLE*(1/FREQUENCY), off_time=(1-DUTY_CYCLE)*(1/FREQUENCY))
-#    print(f"secs: {remaining}")
-#    time.sleep(1)
-#PWM.off()
-
-
-while running_code:
-    time.sleep(5)
-    PWM1.value = DUTY_CYCLE
-    PWM2.value = DUTY_CYCLE
-    time.sleep(5)
-    PWM1.value = .5
-    PWM2.value = .5
-    time.sleep(5)
-    PWM1.value =.75
-    PWM2.value =.75
-    time.sleep(5)
-    PWM1.value = .8
-    PWM2.value = .8
-    time.sleep(5)
-
-# PWM1.blink(fade_out_time = 0)
-# PWM2.blink(fade_out_time = 0)
-    
-
-# PWM1.off()
-# PWM2.off()
-
-
-
 signal.pause()
 #exit()
 
