@@ -3,7 +3,7 @@
 # Samuel Gue, Lydia Heath, Gabriel Ruiz, Marilyn Turner, Sabrina Weng
 
 from rpi_hardware_pwm import HardwarePWM
-from gpiozero import DigitalOutputDevice, Button, MCP3008
+from gpiozero import DigitalOutputDevice, Button, MCP3008, LED
 from time import sleep
 import time
 import signal
@@ -18,7 +18,8 @@ BAIL_PIN = 5 # Bail Bar control simulated on GPIO5
 RELAY_PIN = 27 # Relay test on GPIO27
 #REED_PIN = 17 # Bail bar control simulated on GPI017
 DUTY_CYCLE = 0.25
-
+MAGNET_PIN1 = 15 # PWM SIGNAL FOR M1
+MAGNET_PIN2 = 18 # PWM SIGNAL FOR M2
 ###################### Code ######################
 
 # MCP3008 ADC Setup for channel 0
@@ -26,12 +27,17 @@ spi = spidev.SpiDev()
 spi.open(0,0) # Open SPI bus
 spi.max_speed_hz = 1800000 # recommended SPI clock frequency for range 2.7<voltage<3.3
 
+# MD30C R2 SETUP
 PWM0 = HardwarePWM(pwm_channel=0, hz=18000) # GPIO12
 PWM1 = HardwarePWM(pwm_channel=1, hz=18000) # GPIO13
 
 # NOTE: DIR off = clockwise, DIR on = couter-clockwise
 DIR1 = DigitalOutputDevice(DIR1_PIN) # initially off
 DIR2 = DigitalOutputDevice(DIR2_PIN)
+
+# MDD10A SETUP
+MAG15 = LED(MAGNET_PIN1)
+MAG18 = LED(MAGNET_PIN2)
 
 # NOTE: Button is pulled high by default through internal pull-up resistor on pi
 #       Connect other side to ground. See website linked in research sources for more info 
@@ -77,6 +83,8 @@ def Slow_down(current_value):
         PWM0.start(duty_cycle)
         PWM1.start(duty_cycle)
         time.sleep(0.5)
+        MAG15.off()
+        MAG18.off()
     print("Motors stopped")
 
 # Use Estop.when_release when during press
@@ -89,20 +97,25 @@ BailBar.when_released = Bail_released
 #ReedSwitch.when_pressed = Bail_pressed
 #ReedSwitch.when_released = Bail_released
 
-#Testing Relay, can be deleted
-Relay.on()
-time.sleep(5)
-Relay.off()
+# #Testing Relay, can be deleted
+# Relay.on()
+# time.sleep(5)
+# Relay.off()
 
 while True: # Continuous loop
     try:
         while pot_reading:  # Selected with Bail_pressed to read pot
+            MAG15.off()
+            MAG18.off()
             dutycyclevalue = Read_Channel_0(0)
             DUTY_CYCLE = dutycyclevalue / 1023 # ADC calculation
             print(f"Pot value: {DUTY_CYCLE}")
-            PWM0.start(DUTY_CYCLE*100)      # Send Hardware PWM to motors
-            PWM1.start(DUTY_CYCLE*100)
-            time.sleep(.5)
+            if DUTY_CYCLE > 0:
+                MAG15.on()
+                MAG18.on()
+                time.sleep(.5)
+                PWM0.start(DUTY_CYCLE*100)      # Send Hardware PWM to motors
+                PWM1.start(DUTY_CYCLE*100)
     except KeyboardInterrupt:
         print("interrupt caught")
         Slow_down(DUTY_CYCLE*100)   # Button was released and motor slows down
@@ -120,6 +133,8 @@ while True: # Continuous loop
 
 spi.close()
 signal.pause()
+MAG15.close()
+MAG18.close()
 #exit()
 
 
