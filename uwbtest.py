@@ -1,40 +1,49 @@
-#UWB Test 
+import asyncio
+import struct
+from bless import BlessServer, BlessGATTCharacteristic, GATTCharacteristicProperties, GATTAttributePermissions
 
-import serial
-import time
+# Ensure UUID blocks correspond precisely to Swift configurations
+SERVICE_UUID = "4A98C721-1234-ABCD-EF01-9876543210AB"
+CHAR_UUID    = "4A98C722-1234-ABCD-EF01-9876543210AB"
 
-# Adjust port: "/dev/ttyACM0" for USB or "/dev/serial0" for GPIO pins
-SERIAL_PORT = "/dev/serial0" 
-BAUD_RATE = 115200
+def write_request_handler(characteristic: BlessGATTCharacteristic, data: bytearray):
+    try:
+        # Unpack the raw 4-byte stream payload back into an explicit Python Float type
+        distance_meters = struct.unpack('<f', data)[0]
+        print(f"Received Stream Segment -> Realtime Distance: {distance_meters:.3f} meters")
+    except Exception as e:
+        print(f"Error parsing inbound telemetry payload packet: {e}")
 
-try:
-    ser = serial.Serial(SERIAL_PORT, baudrate=BAUD_RATE, timeout=1)
-    print(f"Connected to Qorvo Board on {SERIAL_PORT}")
+async def run_server():
+    print("Initializing Raspberry Pi 5 Custom BLE GATT Core Server Node...")
     
-    # Optional: Send awake or initialization commands if using CLI firmware
-    ser.write(b"\r\r") 
-    time.sleep(0.5)
+    # Initialize the bless server with a name visible to your iOS app
+    server = BlessServer(name="Pi5-GATT-Server")
+    
+    # Register endpoints using bless syntax
+    await server.add_new_service(SERVICE_UUID)
+    await server.add_new_characteristic(
+        SERVICE_UUID, 
+        CHAR_UUID, 
+        properties=GATTCharacteristicProperties.write_without_response | GATTCharacteristicProperties.write, 
+        permissions=GATTAttributePermissions.writeable,
+        value=bytearray([0x00, 0x00, 0x00, 0x00])
+    )
+    
+    # Bind your callback function to execute whenever the iOS app writes data
+    server.write_request = write_request_handler
+    
+    print("GATT Profile Online. Advertising payload target to iOS device...")
+    await server.start()
+    
+    # Continuous loop keeping the peripheral stack active
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except asyncio.CancelledError:
+        print("Shutting down GATT Server...")
+    finally:
+        await server.stop()
 
-    while True:
-        if ser.in_waiting > 0:
-            line = ser.readline().decode('utf-8', errors='ignore').strip()
-            
-            # Case A: If your firmware outputs comma-separated text strings
-            if "DIST" in line or "AN0" in line:
-                print(f"Ranging Data: {line}")
-                # Example split logic depending on your exact CLI format:
-                # data = line.split(",")
-                
-            # Case B: Standard debug stream dump
-            elif line:
-                print(f"Raw Output: {line}")
-                
-        time.sleep(0.01)
-
-except KeyboardInterrupt:
-    print("\nExiting script.")
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    if 'ser' in locals() and ser.is_open:
-        ser.close()
+if __name__ == "__main__":
+    asyncio.run(run_server())
