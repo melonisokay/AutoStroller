@@ -1,40 +1,42 @@
 #UWB Test 
 
-import serial
-import time
+import asyncio
+import struct
+from bleak import BleakGATTCharacteristic
+from bleak.backends.peripheral.builtin import PeripheralServer
 
-# Adjust port: "/dev/ttyACM0" for USB or "/dev/serial0" for GPIO pins
-SERIAL_PORT = "/dev/serial0" 
-BAUD_RATE = 115200
+# Ensure UUID blocks correspond precisely to Swift Configuration
+SERVICE_UUID = "4A98C721-1234-ABCD-EF01-9876543210AB"
+CHAR_UUID = "4A98C722-1234-ABCD-EF01-9876543210AB"
 
-try:
-    ser = serial.Serial(SERIAL_PORT, baudrate=BAUD_RATE, timeout=1)
-    print(f"Connected to Qorvo Board on {SERIAL_PORT}")
-    
-    # Optional: Send awake or initialization commands if using CLI firmware
-    ser.write(b"\r\r") 
-    time.sleep(0.5)
+def write_request_handler(characteristic: BleakGATTCharacteristic, data: bytearray):
+    try:
+        # Unpack the raw 4-byte stream payload back into an explicit Python Float type
+        distance_meters = struct.unpack('<f',data)[0]
+        print(f"Received Stream Segment -> Realtime Distance: {distance_meters:.3f} meters")
+    except Exception as e:
+        print(f"Error parsing inbound telemetry payload packet: {e}")
 
-    while True:
-        if ser.in_waiting > 0:
-            line = ser.readline().decode('utf-8', errors='ignore').strip()
-            
-            # Case A: If your firmware outputs comma-separated text strings
-            if "DIST" in line or "AN0" in line:
-                print(f"Ranging Data: {line}")
-                # Example split logic depending on your exact CLI format:
-                # data = line.split(",")
-                
-            # Case B: Standard debug stream dump
-            elif line:
-                print(f"Raw Output: {line}")
-                
-        time.sleep(0.01)
+async def run_server():
+    print("Initializing Raspberry Pi 5 Custom BLE GATT Core Server Node...")
+    server = PeripheralServer()
 
-except KeyboardInterrupt:
-    print("\nExiting script.")
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    if 'ser' in locals() and ser.is_open:
-        ser.close()
+    # Register endpoints 
+    await server.add_service(SERVICE_UUID)
+    await server.add_characteristic(
+        SERVICE_UUID, 
+        CHAR_UUID, 
+        properties = ["write-without-response"],
+        value = bytearray([0x00, 0x00, 0x00, 0x00]),
+        write_callback = write_request_handler
+        )
+
+    print("GATT Profile Online. Advertising payload target to iOS device...")
+    await server.start()
+
+    # Continous looop keeping the peripheral stack active
+    while True: 
+        await asyncio.sleep(1)
+
+if __name__ == "__main__":
+    asyncio.run(run_server())
