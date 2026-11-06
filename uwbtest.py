@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import struct
 from bless import BlessServer, BlessGATTCharacteristic, GATTCharacteristicProperties, GATTAttributePermissions
@@ -8,11 +9,16 @@ CHAR_UUID    = "4A98C722-1234-ABCD-EF01-9876543210AB"
 
 def write_request_handler(characteristic: BlessGATTCharacteristic, data: bytearray):
     try:
-        # Unpack the raw 4-byte stream payload back into an explicit Python Float type
-        distance_meters = struct.unpack('<f', data)[0]
-        print(f"Received Stream Segment -> Realtime Distance: {distance_meters:.3f} meters")
+        if len(data) == 8:
+            distance, azimuth_radians = struct.unpack('<ff', data)
+            azimuth_degrees = azimuth_radians * (180.0 / 3.1415926535)
+
+            print(f"Received -> Distance: {distance: .2f}m | Azimuth: {azimuth_radians: .2f} rad ({azimuth_degrees: .1f} deg)")
+        else:
+            print(f"Received unexpected payload length: {len(data)} bytes")
+
     except Exception as e:
-        print(f"Error parsing inbound telemetry payload packet: {e}")
+        print(f"Error parsing inbound telemetry payload packet {e}")
 
 async def run_server():
     print("Initializing Raspberry Pi 5 Custom BLE GATT Core Server Node...")
