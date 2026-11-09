@@ -11,6 +11,9 @@
   @url https://github.com/DFRobot/DFRobot_RaspberryPi_A02YYUW
 '''
 
+# DFRobot_RaspberryPi_A02YYUW contains library and test code is located in Sonic.py
+# Need to determine way to differentiate stationary from moving item.
+
 import serial
 
 import time
