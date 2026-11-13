@@ -14,7 +14,7 @@ import spidev
 ###################### Macros ######################
 DIR1_PIN = 16  # DIR control for motor 1 on pin GPIO16
 DIR2_PIN = 6   # DIR control for motor 2 on pin GPIO6
-BAIL_PIN = 5 # Bail Bar control simulated on GPIO5
+BAIL_PIN = 24 # Bail Bar control simulated on GPIO5
 RELAY_PIN = 27 # Relay test on GPIO27
 #REED_PIN = 17 # Bail bar control simulated on GPI017
 DUTY_CYCLE = 0.25
@@ -108,7 +108,7 @@ while True: # Continuous loop
             MAG15.off()
             MAG18.off()
             dutycyclevalue = Read_Channel_0(0)
-            DUTY_CYCLE = dutycyclevalue / 1023 # ADC calculation
+            DUTY_CYCLE = ((dutycyclevalue / 1023) - 0.3685) / 0.0694 # ADC calculation
             print(f"Pot value: {DUTY_CYCLE}")
             if DUTY_CYCLE > 0:
                 MAG15.on()
