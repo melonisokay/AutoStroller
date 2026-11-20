@@ -107,7 +107,7 @@ while True: # Continuous loop
             MAG15.off()
             MAG18.off()
             dutycyclevalue = Read_Channel_0(0)
-            DUTY_CYCLE = ((dutycyclevalue / 1023)- 0.346041) / 0.077219 # ADC calculation 
+            DUTY_CYCLE = (((dutycyclevalue / 1023)- 0.346041) / 0.077219) / 2 # ADC calculation 
             print(f"Pot value: {DUTY_CYCLE}")
             if DUTY_CYCLE > 0:
                 MAG15.on()
