@@ -15,10 +15,10 @@ import spidev
 DIR1_PIN = 16  # DIR control for motor 1 on pin GPIO16
 DIR2_PIN = 6   # DIR control for motor 2 on pin GPIO6
 BAIL_PIN = 24 # Bail Bar control simulated on GPIO24
-RELAY_PIN = 27 # Relay test on GPIO27
+RELAY_PIN = 22 # Relay test on GPIO27
 #REED_PIN = 17 # Bail bar control simulated on GPI017
-DUTY_CYCLE = 0.15
-MAGNET_PIN1 = 22 # PWM SIGNAL FOR M1
+DUTY_CYCLE = 0.20
+MAGNET_PIN1 = 27 # PWM SIGNAL FOR M1
 MAGNET_PIN2 = 18 # PWM SIGNAL FOR M2
 ###################### Code ######################
 
@@ -135,7 +135,7 @@ while True: # Continuous loop
         # time.sleep(1)
             
 
-        if i >= 4:      # Prevent us from being stuck in the while loop. Could use a different signal or interrupt instead later
+        if i >= 20:      # Prevent us from being stuck in the while loop. Could use a different signal or interrupt instead later
             break
         continue
 

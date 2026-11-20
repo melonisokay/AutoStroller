@@ -15,10 +15,9 @@ import spidev
 DIR1_PIN = 16  # DIR control for motor 1 on pin GPIO16
 DIR2_PIN = 6   # DIR control for motor 2 on pin GPIO6
 BAIL_PIN = 24 # Bail Bar control simulated on GPIO5
-RELAY_PIN = 27 # Relay test on GPIO27
 #REED_PIN = 17 # Bail bar control simulated on GPI017
 DUTY_CYCLE = 0.25
-MAGNET_PIN1 = 15 # PWM SIGNAL FOR M1
+MAGNET_PIN1 = 27 # PWM SIGNAL FOR M1
 MAGNET_PIN2 = 18 # PWM SIGNAL FOR M2
 ###################### Code ######################
 
@@ -44,7 +43,7 @@ MAG18 = LED(MAGNET_PIN2)
 BailBar = Button(BAIL_PIN, pull_up = True, bounce_time = 0.3)
 #ReedSwitch = Button(REED_PIN, pull_up = True, bounce_time = 0.3)
 # Pot = MCP3008(channel = 0, device = 0)
-Relay = DigitalOutputDevice(RELAY_PIN)
+#Relay = DigitalOutputDevice(RELAY_PIN)
 
 i = 0   
 running_code = False
@@ -108,7 +107,7 @@ while True: # Continuous loop
             MAG15.off()
             MAG18.off()
             dutycyclevalue = Read_Channel_0(0)
-            DUTY_CYCLE = ((dutycyclevalue / 1023) - 0.3685) / 0.0694 # ADC calculation
+            DUTY_CYCLE = ((dutycyclevalue / 1023)- 0.346041) / 0.077219 # ADC calculation 
             print(f"Pot value: {DUTY_CYCLE}")
             if DUTY_CYCLE > 0:
                 MAG15.on()
@@ -127,7 +126,7 @@ while True: # Continuous loop
         # time.sleep(1)
             
 
-        if i >= 4:      # Prevent us from being stuck in the while loop. Could use a different signal or interrupt instead later
+        if i >= 20:      # Prevent us from being stuck in the while loop. Could use a different signal or interrupt instead later
             break
         continue
 

@@ -46,6 +46,8 @@ def print_distance(dis):
     print("Below the lower limit: %d" %dis)
   elif board.last_operate_status == board.STA_ERR_DATA:
     print("No data!")
+  else:
+    print(board.last_operate_status)
 
 def distance_change(dis):
   global previdis, duty
@@ -75,7 +77,7 @@ def distance_change(dis):
 # function if mathematical methods are used to determine stationary and moving objects
 # Required to determine diameter of wheel(d) and ratio factor = duty cycle/rotation(rpm)
 def algormethod():
-  d = 10.3
+  d = 261.62 #10.3 inches -> 261.62mm
   circum = d * 3.1415
   dcrot_ratio = 25 # duty cycle / rotation/m 25 to test
   caldistravel = circum * (duty/dcrot_ratio)
@@ -96,8 +98,9 @@ if __name__ == "__main__":
   dis_max = 4500 
   board.set_dis_range(dis_min, dis_max)
   previdis = 0
-  duty = 50
+  duty = 0
   while True:
+    print("entering while loop")
     distance = board.getDistance()
     if previdis == 0:
       previdis = distance
@@ -106,5 +109,5 @@ if __name__ == "__main__":
     #time.sleep(0.3) 
     #distance_change(distance)
     algormethod()
-    print(" ")
-    time.sleep(1)
+    print("sleeping")
+    time.sleep(2)

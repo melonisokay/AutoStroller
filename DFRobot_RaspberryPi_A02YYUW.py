@@ -39,12 +39,13 @@ class DFRobot_A02_Distance:
   distance_min = 0
   range_max = 4500
 
-  def __init__(self, port = '/dev/serial0'):
+  def __init__(self, port = '/dev/ttyAMA0'):
     '''
       @brief    Sensor initialization.
     '''
     self._ser = serial.Serial(port, 9600)
     if self._ser.isOpen() != True:
+      print("Serial not open")
       self.last_operate_status = self.STA_ERR_SERIAL
 
   def set_dis_range(self, min, max):
